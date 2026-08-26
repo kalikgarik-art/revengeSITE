@@ -3,6 +3,11 @@
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
   }
 }
 
@@ -22,16 +27,21 @@
   font-family: 'Rajdhani', sans-serif;
 }
 
-/* Neon Red Text with slow shimmering glow */
+/* Off-screen section optimization for mobile */
+.content-auto-render {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 400px;
+}
+
+/* Neon Red Text with lightweight GPU-friendly glow */
 .neon-text-red {
   color: #ff2a2a;
   text-shadow:
     0 0 6px rgba(255, 50, 50, 0.9),
-    0 0 14px rgba(255, 20, 20, 0.85),
-    0 0 28px rgba(255, 0, 0, 0.75),
-    0 0 50px rgba(230, 0, 0, 0.6),
-    0 0 80px rgba(180, 0, 0, 0.45);
+    0 0 14px rgba(255, 20, 20, 0.8),
+    0 0 28px rgba(255, 0, 0, 0.6);
   animation: neonRedPulse 4s ease-in-out infinite alternate;
+  will-change: text-shadow, color;
 }
 
 @keyframes neonRedPulse {
@@ -40,30 +50,21 @@
     text-shadow:
       0 0 5px rgba(255, 60, 60, 0.85),
       0 0 12px rgba(255, 20, 20, 0.75),
-      0 0 25px rgba(235, 0, 0, 0.65),
-      0 0 45px rgba(200, 0, 0, 0.5),
-      0 0 75px rgba(160, 0, 0, 0.35);
-    filter: brightness(1);
+      0 0 24px rgba(235, 0, 0, 0.55);
   }
   50% {
     color: #ff4d4d;
     text-shadow:
       0 0 8px rgba(255, 100, 100, 0.95),
-      0 0 20px rgba(255, 40, 40, 0.9),
-      0 0 35px rgba(255, 0, 0, 0.85),
-      0 0 65px rgba(230, 0, 0, 0.7),
-      0 0 110px rgba(200, 0, 0, 0.55);
-    filter: brightness(1.15);
+      0 0 18px rgba(255, 40, 40, 0.85),
+      0 0 32px rgba(255, 0, 0, 0.75);
   }
   100% {
     color: #ff2222;
     text-shadow:
       0 0 6px rgba(255, 40, 40, 0.9),
-      0 0 16px rgba(255, 10, 10, 0.8),
-      0 0 30px rgba(240, 0, 0, 0.75),
-      0 0 55px rgba(210, 0, 0, 0.6),
-      0 0 95px rgba(170, 0, 0, 0.4);
-    filter: brightness(1.05);
+      0 0 15px rgba(255, 10, 10, 0.75),
+      0 0 28px rgba(240, 0, 0, 0.65);
   }
 }
 
@@ -72,25 +73,24 @@
   color: #ffffff;
   text-shadow:
     0 0 4px rgba(255, 255, 255, 0.9),
-    0 0 10px rgba(255, 255, 255, 0.75),
-    0 0 20px rgba(255, 255, 255, 0.5),
-    0 0 35px rgba(255, 200, 200, 0.35);
+    0 0 10px rgba(255, 255, 255, 0.7),
+    0 0 18px rgba(255, 255, 255, 0.4);
   animation: neonWhitePulse 3.5s ease-in-out infinite alternate;
+  will-change: text-shadow;
 }
 
 @keyframes neonWhitePulse {
   0% {
     text-shadow:
       0 0 3px rgba(255, 255, 255, 0.8),
-      0 0 8px rgba(255, 255, 255, 0.65),
-      0 0 16px rgba(255, 255, 255, 0.4);
+      0 0 8px rgba(255, 255, 255, 0.6);
     opacity: 0.92;
   }
   100% {
     text-shadow:
       0 0 5px rgba(255, 255, 255, 1),
-      0 0 14px rgba(255, 255, 255, 0.85),
-      0 0 25px rgba(255, 230, 230, 0.6);
+      0 0 12px rgba(255, 255, 255, 0.8),
+      0 0 22px rgba(255, 230, 230, 0.5);
     opacity: 1;
   }
 }
@@ -98,19 +98,26 @@
 /* Neon Glow Card Islands */
 .neon-island {
   position: relative;
-  background: rgba(14, 14, 18, 0.85);
-  backdrop-filter: blur(14px);
+  background: rgba(14, 14, 18, 0.92);
   border: 1px solid rgba(255, 30, 30, 0.28);
   box-shadow:
     0 0 18px rgba(255, 0, 0, 0.08),
     inset 0 0 14px rgba(255, 0, 0, 0.03);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+  transform: translateZ(0);
+}
+
+@supports (backdrop-filter: blur(12px)) {
+  .neon-island {
+    background: rgba(14, 14, 18, 0.85);
+    backdrop-filter: blur(12px);
+  }
 }
 
 .neon-island:hover {
   border-color: rgba(255, 40, 40, 0.6);
   box-shadow:
-    0 0 28px rgba(255, 20, 20, 0.22),
+    0 0 24px rgba(255, 20, 20, 0.22),
     inset 0 0 18px rgba(255, 0, 0, 0.06);
   transform: translateY(-2px);
 }
@@ -118,56 +125,34 @@
 /* Enhanced Island for Owners */
 .neon-owner-island {
   position: relative;
-  background: radial-gradient(circle at top, rgba(35, 12, 16, 0.5) 0%, rgba(12, 12, 16, 0.9) 70%);
-  backdrop-filter: blur(16px);
+  background: radial-gradient(circle at top, rgba(35, 12, 16, 0.65) 0%, rgba(12, 12, 16, 0.95) 70%);
   border: 1px solid rgba(255, 40, 40, 0.38);
   box-shadow:
-    0 0 22px rgba(255, 20, 20, 0.12),
-    0 10px 30px rgba(0, 0, 0, 0.7);
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    0 0 20px rgba(255, 20, 20, 0.12),
+    0 10px 28px rgba(0, 0, 0, 0.7);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+  transform: translateZ(0);
+}
+
+@supports (backdrop-filter: blur(14px)) {
+  .neon-owner-island {
+    backdrop-filter: blur(14px);
+  }
 }
 
 .neon-owner-island:hover {
   border-color: rgba(255, 60, 60, 0.75);
   box-shadow:
-    0 0 32px rgba(255, 30, 30, 0.28),
-    0 12px 35px rgba(0, 0, 0, 0.85);
-  transform: translateY(-3px);
-}
-
-/* Neon Border Outline Container */
-.neon-hero-frame {
-  position: relative;
-  background: rgba(14, 14, 18, 0.45);
-  backdrop-filter: blur(12px);
-  border: 1.5px solid rgba(255, 40, 40, 0.65);
-  box-shadow:
-    0 0 15px rgba(255, 30, 30, 0.3),
-    0 0 35px rgba(255, 0, 0, 0.15),
-    inset 0 0 20px rgba(255, 0, 0, 0.08);
-  animation: heroFramePulse 4s ease-in-out infinite alternate;
-}
-
-@keyframes heroFramePulse {
-  0% {
-    border-color: rgba(255, 40, 40, 0.55);
-    box-shadow:
-      0 0 12px rgba(255, 30, 30, 0.25),
-      0 0 28px rgba(255, 0, 0, 0.12),
-      inset 0 0 15px rgba(255, 0, 0, 0.05);
-  }
-  100% {
-    border-color: rgba(255, 60, 60, 0.85);
-    box-shadow:
-      0 0 22px rgba(255, 40, 40, 0.45),
-      0 0 45px rgba(255, 10, 10, 0.25),
-      inset 0 0 25px rgba(255, 0, 0, 0.12);
-  }
+    0 0 28px rgba(255, 30, 30, 0.28),
+    0 12px 32px rgba(0, 0, 0, 0.85);
+  transform: translateY(-2px);
 }
 
 /* Background Ambient Glow */
 .ambient-glow-red {
-  background: radial-gradient(ellipse 70% 50% at 50% 25%, rgba(230, 20, 30, 0.22) 0%, rgba(200, 10, 25, 0.08) 45%, rgba(0, 0, 0, 0) 75%);
+  background: radial-gradient(ellipse 70% 50% at 50% 25%, rgba(230, 20, 30, 0.18) 0%, rgba(200, 10, 25, 0.06) 45%, rgba(0, 0, 0, 0) 75%);
+  pointer-events: none;
+  transform: translateZ(0);
 }
 
 /* Red Shimmer / Crimson Flow for Discord & Action Buttons */
@@ -176,13 +161,15 @@
   background: linear-gradient(115deg, #c51616 0%, #ea2a2a 28%, #ff6b6b 48%, #ea2a2a 68%, #b31010 100%);
   background-size: 260% 100%;
   animation: crimsonFlow 3.5s ease-in-out infinite;
-  box-shadow: 0 0 22px rgba(255, 25, 25, 0.45), inset 0 0 10px rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 20px rgba(255, 25, 25, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.25);
   overflow: hidden;
+  will-change: background-position;
+  transform: translateZ(0);
 }
 
 .btn-crimson-flow:hover {
   animation: crimsonFlow 1.8s ease-in-out infinite;
-  box-shadow: 0 0 35px rgba(255, 40, 40, 0.8), inset 0 0 15px rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 30px rgba(255, 40, 40, 0.75), inset 0 0 15px rgba(255, 255, 255, 0.35);
 }
 
 @keyframes crimsonFlow {
@@ -207,7 +194,8 @@
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.04);
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
+  transform: translateZ(0);
 }
 
 .snake-border-btn::before {
@@ -229,6 +217,7 @@
   );
   animation: snakeRotate 3.2s linear infinite;
   pointer-events: none;
+  will-change: transform;
 }
 
 @keyframes snakeRotate {
@@ -262,14 +251,16 @@
 }
 
 .ambient-glow-bottom {
-  background: radial-gradient(ellipse 75% 55% at 50% 85%, rgba(200, 15, 25, 0.18) 0%, rgba(150, 10, 20, 0.05) 50%, rgba(0, 0, 0, 0) 80%);
+  background: radial-gradient(ellipse 75% 55% at 50% 85%, rgba(200, 15, 25, 0.16) 0%, rgba(150, 10, 20, 0.04) 50%, rgba(0, 0, 0, 0) 80%);
+  pointer-events: none;
+  transform: translateZ(0);
 }
 
 .ambient-grid {
   background-size: 40px 40px;
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
 }
 
 .bg-radial-page {

@@ -20,54 +20,60 @@ export const SakuraPetals: React.FC = () => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
     let animationFrameId: number;
+    let isRunning = true;
 
+    const isMobile = window.innerWidth < 768;
+
+    // Viewport-based dimensions (much faster & zero memory bloat compared to full document height)
     const updateDimensions = () => {
       if (!canvas) return;
-      const docHeight = Math.max(
-        document.documentElement.scrollHeight,
-        document.body.scrollHeight,
-        window.innerHeight * 2
-      );
       canvas.width = window.innerWidth;
-      canvas.height = docHeight;
+      canvas.height = window.innerHeight;
     };
 
     updateDimensions();
-    window.addEventListener('resize', updateDimensions);
 
-    // Array of dark red, crimson, and neon-tinged rose petals
+    let resizeTimeout: NodeJS.Timeout;
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(updateDimensions, 150);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    // Optimized petal colors
     const petalColors = [
       'rgba(235, 25, 35, 0.75)',
       'rgba(255, 45, 55, 0.85)',
       'rgba(190, 15, 25, 0.7)',
-      'rgba(255, 80, 80, 0.8)',
-      'rgba(150, 8, 18, 0.65)',
+      'rgba(255, 75, 75, 0.8)',
+      'rgba(160, 10, 20, 0.65)',
     ];
 
     let width = canvas.width;
     let height = canvas.height;
 
-    // Smaller petals as requested (size 3 - 7px) and distributed across the whole document
-    const petalCount = Math.min(Math.floor((width * height) / 38000), 90);
+    // Mobile: 16 petals for max FPS / battery efficiency. Desktop: 36 petals
+    const petalCount = isMobile ? 16 : 36;
     const petals: Petal[] = [];
 
     for (let i = 0; i < petalCount; i++) {
       petals.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        size: Math.random() * 4 + 3.5, // Smaller delicate petals
-        speedX: Math.random() * 0.9 - 0.2,
-        speedY: Math.random() * 1.1 + 0.6,
+        size: Math.random() * 3.5 + 3,
+        speedX: Math.random() * 0.7 - 0.2,
+        speedY: Math.random() * 0.9 + 0.5,
         rotation: Math.random() * 360,
-        rotationSpeed: (Math.random() - 0.5) * 1.2,
-        flip: Math.random(),
-        flipSpeed: Math.random() * 0.025 + 0.01,
-        opacity: Math.random() * 0.5 + 0.35,
-        color: petalColors[Math.floor(Math.random() * petalColors.length)],
+        rotationSpeed: (Math.random() - 0.5) * 1.0,
+        flip: Math.random() * Math.PI,
+        flipSpeed: Math.random() * 0.02 + 0.01,
+        opacity: Math.random() * 0.4 + 0.4,
+        color: petalColors[i % petalColors.length],
       });
     }
 
@@ -78,7 +84,6 @@ export const SakuraPetals: React.FC = () => {
       ctx.scale(1, Math.sin(p.flip));
 
       ctx.beginPath();
-      // Delicate organic curved petal path
       ctx.moveTo(0, 0);
       ctx.bezierCurveTo(p.size / 2, -p.size / 2, p.size, -p.size / 4, p.size, p.size / 2);
       ctx.bezierCurveTo(p.size, p.size, p.size / 2, p.size * 1.2, 0, p.size);
@@ -88,21 +93,27 @@ export const SakuraPetals: React.FC = () => {
 
       ctx.fillStyle = p.color;
       ctx.globalAlpha = p.opacity;
-      ctx.shadowColor = 'rgba(255, 30, 30, 0.5)';
-      ctx.shadowBlur = 4;
+      
+      // Only use shadow on high-performance desktop displays
+      if (!isMobile) {
+        ctx.shadowColor = 'rgba(255, 30, 30, 0.4)';
+        ctx.shadowBlur = 3;
+      }
+      
       ctx.fill();
-
       ctx.restore();
     };
 
     const render = () => {
+      if (!isRunning) return;
+
       width = canvas.width;
       height = canvas.height;
       ctx.clearRect(0, 0, width, height);
 
       for (let i = 0; i < petals.length; i++) {
         const p = petals[i];
-        p.x += p.speedX + Math.sin(p.y * 0.003) * 0.4;
+        p.x += p.speedX + Math.sin(p.y * 0.004) * 0.35;
         p.y += p.speedY;
         p.rotation += p.rotationSpeed;
         p.flip += p.flipSpeed;
@@ -125,8 +136,25 @@ export const SakuraPetals: React.FC = () => {
 
     render();
 
+    // Pause animation when tab or screen is backgrounded to save mobile CPU/battery
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        isRunning = false;
+        cancelAnimationFrame(animationFrameId);
+      } else {
+        if (!isRunning) {
+          isRunning = true;
+          render();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
-      window.removeEventListener('resize', updateDimensions);
+      isRunning = false;
+      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);
@@ -134,8 +162,8 @@ export const SakuraPetals: React.FC = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute top-0 left-0 pointer-events-none z-10 w-full"
-      style={{ opacity: 0.88 }}
+      className="fixed inset-0 pointer-events-none z-10 w-full h-full transform-gpu"
+      style={{ opacity: 0.85 }}
     />
   );
 };
